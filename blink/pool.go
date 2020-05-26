@@ -13,14 +13,14 @@ var locker sync.RWMutex
 
 func addViewToPool(view *WebView) {
 	locker.Lock()
-	windowMap[view.window] = view
-	handleMap[view.handle] = view
+	windowMap[view.Window] = view
+	handleMap[view.Handle] = view
 	locker.Unlock()
 	//如果webview destroy的话,从池中清除
 	view.On("destroy", func(v *WebView) {
 		locker.Lock()
-		delete(windowMap, v.window)
-		delete(handleMap, v.handle)
+		delete(windowMap, v.Window)
+		delete(handleMap, v.Handle)
 		locker.Unlock()
 	})
 }

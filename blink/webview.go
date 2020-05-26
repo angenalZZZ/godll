@@ -11,8 +11,8 @@ import (
 type WebView struct {
 	eventemitter.EventEmitter
 
-	window C.wkeWebView
-	handle win.HWND
+	Window C.wkeWebView
+	Handle win.HWND
 
 	autoTitle bool
 	jsFunc    map[string]interface{}
@@ -51,8 +51,8 @@ func NewWebView(isTransparent bool, bounds ...int) *WebView {
 
 	done := make(chan bool)
 	jobQueue <- func() {
-		view.window = C.createWebWindow(C.bool(isTransparent), C.int(x), C.int(y), C.int(width), C.int(height))
-		view.handle = win.HWND(uintptr(unsafe.Pointer(C.getWindowHandle(view.window))))
+		view.Window = C.createWebWindow(C.bool(isTransparent), C.int(x), C.int(y), C.int(width), C.int(height))
+		view.Handle = win.HWND(uintptr(unsafe.Pointer(C.getWindowHandle(view.Window))))
 		close(done)
 	}
 	<-done
@@ -129,15 +129,15 @@ func (view *WebView) MoveToCenter() {
 	var height int32 = 0
 	{
 		rect := &win.RECT{}
-		win.GetWindowRect(view.handle, rect)
+		win.GetWindowRect(view.Handle, rect)
 		width = rect.Right - rect.Left
 		height = rect.Bottom - rect.Top
 	}
 
 	var parentWidth int32 = 0
 	var parentHeight int32 = 0
-	if win.GetWindowLong(view.handle, win.GWL_STYLE) == win.WS_CHILD {
-		parent := win.GetParent(view.handle)
+	if win.GetWindowLong(view.Handle, win.GWL_STYLE) == win.WS_CHILD {
+		parent := win.GetParent(view.Handle)
 		rect := &win.RECT{}
 		win.GetClientRect(parent, rect)
 		parentWidth = rect.Right - rect.Left
@@ -150,13 +150,13 @@ func (view *WebView) MoveToCenter() {
 	x := (parentWidth - width) / 2
 	y := (parentHeight - height) / 2
 
-	win.MoveWindow(view.handle, x, y, width, height, false)
+	win.MoveWindow(view.Handle, x, y, width, height, false)
 }
 
 func (view *WebView) SetWindowTitle(title string) {
 	done := make(chan bool)
 	jobQueue <- func() {
-		C.setWindowTitle(view.window, C.CString(title))
+		C.setWindowTitle(view.Window, C.CString(title))
 		close(done)
 	}
 	<-done
@@ -177,7 +177,7 @@ func (view *WebView) GetWebTitle() string {
 
 	done := make(chan string)
 	jobQueue <- func() {
-		done <- C.GoString(C.getWebTitle(view.window))
+		done <- C.GoString(C.getWebTitle(view.Window))
 		close(done)
 	}
 	return <-done
@@ -186,45 +186,45 @@ func (view *WebView) GetWebTitle() string {
 func (view *WebView) LoadURL(url string) {
 	done := make(chan bool)
 	jobQueue <- func() {
-		C.loadURL(view.window, C.CString(url))
+		C.loadURL(view.Window, C.CString(url))
 		close(done)
 	}
 	<-done
 }
 
 func (view *WebView) ShowCaption() {
-	style := win.GetWindowLongPtr(view.handle, win.GWL_STYLE)
-	win.SetWindowLongPtr(view.handle, win.GWL_STYLE, style|win.WS_CAPTION|win.WS_SYSMENU|win.WS_SIZEBOX)
+	style := win.GetWindowLongPtr(view.Handle, win.GWL_STYLE)
+	win.SetWindowLongPtr(view.Handle, win.GWL_STYLE, style|win.WS_CAPTION|win.WS_SYSMENU|win.WS_SIZEBOX)
 }
 
 func (view *WebView) HideCaption() {
-	style := win.GetWindowLongPtr(view.handle, win.GWL_STYLE)
-	win.SetWindowLongPtr(view.handle, win.GWL_STYLE, style&^win.WS_CAPTION&^win.WS_SYSMENU&^win.WS_SIZEBOX)
+	style := win.GetWindowLongPtr(view.Handle, win.GWL_STYLE)
+	win.SetWindowLongPtr(view.Handle, win.GWL_STYLE, style&^win.WS_CAPTION&^win.WS_SYSMENU&^win.WS_SIZEBOX)
 }
 
 func (view *WebView) ShowDockIcon() {
-	style := win.GetWindowLong(view.handle, win.GWL_EXSTYLE)
-	win.SetWindowLong(view.handle, win.GWL_EXSTYLE, style&^win.WS_EX_TOOLWINDOW)
+	style := win.GetWindowLong(view.Handle, win.GWL_EXSTYLE)
+	win.SetWindowLong(view.Handle, win.GWL_EXSTYLE, style&^win.WS_EX_TOOLWINDOW)
 }
 
 func (view *WebView) HideDockIcon() {
-	style := win.GetWindowLong(view.handle, win.GWL_EXSTYLE)
-	win.SetWindowLong(view.handle, win.GWL_EXSTYLE, style|win.WS_EX_TOOLWINDOW)
+	style := win.GetWindowLong(view.Handle, win.GWL_EXSTYLE)
+	win.SetWindowLong(view.Handle, win.GWL_EXSTYLE, style|win.WS_EX_TOOLWINDOW)
 
 }
 
 func (view *WebView) ShowWindow() {
-	win.ShowWindow(view.handle, win.SW_SHOW)
+	win.ShowWindow(view.Handle, win.SW_SHOW)
 }
 
 func (view *WebView) HideWindow() {
-	win.ShowWindow(view.handle, win.SW_HIDE)
+	win.ShowWindow(view.Handle, win.SW_HIDE)
 }
 
 func (view *WebView) ShowDevTools() {
 	done := make(chan bool)
 	jobQueue <- func() {
-		C.showDevTools(view.window)
+		C.showDevTools(view.Window)
 		close(done)
 	}
 	<-done
@@ -233,7 +233,7 @@ func (view *WebView) ShowDevTools() {
 func (view *WebView) Reload() {
 	done := make(chan bool)
 	jobQueue <- func() {
-		C.reloadURL(view.window)
+		C.reloadURL(view.Window)
 		close(done)
 	}
 	<-done
@@ -241,30 +241,30 @@ func (view *WebView) Reload() {
 
 func (view *WebView) ToTop() {
 	rect := &win.RECT{}
-	win.GetWindowRect(view.handle, rect)
-	win.SetWindowPos(view.handle, win.HWND_TOP, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
+	win.GetWindowRect(view.Handle, rect)
+	win.SetWindowPos(view.Handle, win.HWND_TOP, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
 }
 
 func (view *WebView) MostTop(isTop bool) {
 	rect := &win.RECT{}
-	win.GetWindowRect(view.handle, rect)
+	win.GetWindowRect(view.Handle, rect)
 	if isTop {
-		win.SetWindowPos(view.handle, win.HWND_TOPMOST, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
+		win.SetWindowPos(view.Handle, win.HWND_TOPMOST, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
 	} else {
-		win.SetWindowPos(view.handle, win.HWND_NOTOPMOST, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
+		win.SetWindowPos(view.Handle, win.HWND_NOTOPMOST, rect.Left, rect.Top, rect.Right-rect.Left, rect.Bottom-rect.Top, 0)
 	}
 }
 
 func (view *WebView) MaximizeWindow() {
-	win.ShowWindow(view.handle, win.SW_MAXIMIZE)
+	win.ShowWindow(view.Handle, win.SW_MAXIMIZE)
 }
 
 func (view *WebView) MinimizeWindow() {
-	win.ShowWindow(view.handle, win.SW_MINIMIZE)
+	win.ShowWindow(view.Handle, win.SW_MINIMIZE)
 }
 
 func (view *WebView) RestoreWindow() {
-	win.ShowWindow(view.handle, win.SW_RESTORE)
+	win.ShowWindow(view.Handle, win.SW_RESTORE)
 }
 
 func (view *WebView) DestroyWindow() {
@@ -279,7 +279,7 @@ func (view *WebView) DestroyWindow() {
 				close(view.Destroy)
 			}
 			view.IsDestroy = true
-			C.destroyWindow(view.window)
+			C.destroyWindow(view.Window)
 			close(done)
 		}
 		<-done

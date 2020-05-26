@@ -26,7 +26,7 @@ func InitBlink() error {
 	if err != nil {
 		return fmt.Errorf("无法创建临时目录：%s, err: %s", TempPath, err)
 	}
-	data, err := Asset("blink.dll")
+	data, err := devtools.Asset("blink.dll")
 	if err != nil {
 		return fmt.Errorf("找不到内嵌dll,err: %s", err)
 	}

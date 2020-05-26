@@ -73,8 +73,8 @@ func (view *WebView) SetWindowIcon(iconHandle win.HANDLE) error {
 	if iconHandle == 0 {
 		return errors.New("icon实例非法")
 	}
-	win.SendMessage(view.handle, win.WM_SETICON, 0, uintptr(iconHandle))
-	win.SendMessage(view.handle, win.WM_SETICON, 1, uintptr(iconHandle))
+	win.SendMessage(view.Handle, win.WM_SETICON, 0, uintptr(iconHandle))
+	win.SendMessage(view.Handle, win.WM_SETICON, 1, uintptr(iconHandle))
 	//TODO:这里没有获取last error了
 	return nil
 }
